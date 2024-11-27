@@ -1,14 +1,12 @@
 import socket
-import pytest
 
-from pyvisa_py import common
-from unittest.mock import MagicMock, patch
+
+from unittest.mock import MagicMock
 from pyvisa_py.protocols import vxi11
-from pyvisa_py.protocols.rpc import Packer, RawTCPClient, TCPPortMapperClient, Unpacker
 from pyvisa_py.protocols.vxi11 import CoreClient, ErrorCodes
-from pyvisa_py.tcpip import TCPIPInstrVxi11, Vxi11CoreClient
+from pyvisa_py.tcpip import TCPIPInstrVxi11
 from pyvisa_py.tcpip import VXI11_ERRORS_TO_VISA
-from ..sessions import Session, UnknownAttribute, VISARMSession
+from ..sessions import VISARMSession
 
 # Test vxi11.py changes to error handling
 
