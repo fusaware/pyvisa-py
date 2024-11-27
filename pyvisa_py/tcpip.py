@@ -43,6 +43,11 @@ except ImportError:
 
 # Conversion between VXI11 error codes and VISA status
 # TODO this is so far a best guess, in particular 6 and 29 are likely wrong
+# DWR - Error 6 seems like a good match for channel_not_established, I changed
+# 29 to error_system_error from error_window_already_mapped. The only command
+# that returns 29 is create_intr_chan when the channel is already established.
+# Also, create_event isn't implemented in pyvisa-py at this point so we shouldn't
+# see that error or 6 anyway
 VXI11_ERRORS_TO_VISA = {
     0: StatusCode.success,  # no_error
     1: StatusCode.error_invalid_format,  # syntax_error
@@ -57,7 +62,7 @@ VXI11_ERRORS_TO_VISA = {
     15: StatusCode.error_timeout,  # io_timeout
     17: StatusCode.error_io,  # io_error
     23: StatusCode.error_abort,  # abort
-    29: StatusCode.error_window_already_mapped,  # channel_already_established
+    29: StatusCode.error_system_error,  # channel_already_established
 }
 
 
@@ -255,9 +260,11 @@ class TCPIPInstrHiSLIP(Session):
             status = (
                 StatusCode.success_termination_character_read
                 if self.interface._rmt
-                else StatusCode.success_max_count_read
-                if len(data) >= count
-                else StatusCode.success
+                else (
+                    StatusCode.success_max_count_read
+                    if len(data) >= count
+                    else StatusCode.success
+                )
             )
 
         except socket.timeout:
@@ -561,10 +568,12 @@ class TCPIPInstrVxi11(Session):
                 self.link, chunk_length, timeout, self.lock_timeout, flags, term_char
             )
 
+            # DWR - it would be nice if we could differentiate between a socket timeout
+            # and an intrument returned timeout.
             if error == vxi11.ErrorCodes.io_timeout:
                 return bytes(read_data), StatusCode.error_timeout
             elif error:
-                return bytes(read_data), StatusCode.error_io
+                return bytes(read_data), VXI11_ERRORS_TO_VISA[error]
 
             read_data.extend(data)
             count -= len(data)
@@ -613,8 +622,10 @@ class TCPIPInstrVxi11(Session):
                 if error == vxi11.ErrorCodes.io_timeout:
                     return offset, StatusCode.error_timeout
 
-                elif error or size < len(block):
+                elif size < len(block):
                     return offset, StatusCode.error_io
+                elif error:
+                    return offset, VXI11_ERRORS_TO_VISA[error]
 
                 offset += size
                 num -= size
@@ -1330,9 +1341,11 @@ class TCPIPSocketSession(Session):
         if self.interface:
             value = self.interface.getsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY)
             return (
-                constants.VisaBoolean.true
-                if value == 1
-                else constants.VisaBoolean.false,
+                (
+                    constants.VisaBoolean.true
+                    if value == 1
+                    else constants.VisaBoolean.false
+                ),
                 StatusCode.success,
             )
         return constants.VisaBoolean.false, StatusCode.error_nonsupported_attribute
@@ -1353,9 +1366,11 @@ class TCPIPSocketSession(Session):
         if self.interface:
             value = self.interface.getsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE)
             return (
-                constants.VisaBoolean.true
-                if value == 1
-                else constants.VisaBoolean.false,
+                (
+                    constants.VisaBoolean.true
+                    if value == 1
+                    else constants.VisaBoolean.false
+                ),
                 StatusCode.success,
             )
         return constants.VisaBoolean.false, StatusCode.error_nonsupported_attribute
