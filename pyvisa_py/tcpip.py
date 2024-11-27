@@ -46,7 +46,7 @@ except ImportError:
 # DWR - Error 6 seems like a good match for channel_not_established, I changed
 # 29 to error_system_error from error_window_already_mapped. The only command
 # that returns 29 is create_intr_chan when the channel is already established.
-# Also, create_event isn't implemented in pyvisa-py at this point so we shouldn't 
+# Also, create_event isn't implemented in pyvisa-py at this point so we shouldn't
 # see that error or 6 anyway
 VXI11_ERRORS_TO_VISA = {
     0: StatusCode.success,  # no_error
@@ -260,9 +260,11 @@ class TCPIPInstrHiSLIP(Session):
             status = (
                 StatusCode.success_termination_character_read
                 if self.interface._rmt
-                else StatusCode.success_max_count_read
-                if len(data) >= count
-                else StatusCode.success
+                else (
+                    StatusCode.success_max_count_read
+                    if len(data) >= count
+                    else StatusCode.success
+                )
             )
 
         except socket.timeout:
@@ -1339,9 +1341,11 @@ class TCPIPSocketSession(Session):
         if self.interface:
             value = self.interface.getsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY)
             return (
-                constants.VisaBoolean.true
-                if value == 1
-                else constants.VisaBoolean.false,
+                (
+                    constants.VisaBoolean.true
+                    if value == 1
+                    else constants.VisaBoolean.false
+                ),
                 StatusCode.success,
             )
         return constants.VisaBoolean.false, StatusCode.error_nonsupported_attribute
@@ -1362,9 +1366,11 @@ class TCPIPSocketSession(Session):
         if self.interface:
             value = self.interface.getsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE)
             return (
-                constants.VisaBoolean.true
-                if value == 1
-                else constants.VisaBoolean.false,
+                (
+                    constants.VisaBoolean.true
+                    if value == 1
+                    else constants.VisaBoolean.false
+                ),
                 StatusCode.success,
             )
         return constants.VisaBoolean.false, StatusCode.error_nonsupported_attribute
