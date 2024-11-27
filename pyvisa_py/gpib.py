@@ -709,9 +709,11 @@ class GPIBSession(_GPIBCommon):  # type: ignore[no-redef]
     @staticmethod
     def list_resources() -> List[str]:
         return [
-            "GPIB%d::%d::INSTR" % (board, pad)
-            if sad == 0
-            else "GPIB%d::%d::%d::INSTR" % (board, pad, sad - 0x60)
+            (
+                "GPIB%d::%d::INSTR" % (board, pad)
+                if sad == 0
+                else "GPIB%d::%d::%d::INSTR" % (board, pad, sad - 0x60)
+            )
             for board, pad, sad in _find_listeners()
         ]
 
