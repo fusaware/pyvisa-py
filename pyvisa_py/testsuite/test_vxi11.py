@@ -1,11 +1,10 @@
 import socket
-
-
 from unittest.mock import MagicMock
+
 from pyvisa_py.protocols import vxi11
 from pyvisa_py.protocols.vxi11 import CoreClient, ErrorCodes
-from pyvisa_py.tcpip import TCPIPInstrVxi11
-from pyvisa_py.tcpip import VXI11_ERRORS_TO_VISA
+from pyvisa_py.tcpip import VXI11_ERRORS_TO_VISA, TCPIPInstrVxi11
+
 from ..sessions import VISARMSession
 
 # Test vxi11.py changes to error handling
